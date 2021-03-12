@@ -1,5 +1,6 @@
 // Write your "actions" router here!
 const express = require('express');
+const {validateActionId, validateActionBody} =require('./../middleware/middleware')
 const router = express.Router();
 const Actions = require('./actions-model');
 
@@ -12,21 +13,37 @@ router.get('/', (req, res, next)=>{
         .catch(next)
 })
 
-router.get('/:id', (req, res, next)=>{
-    Actions.get(req.params.id)
-        .then(action=>{
-            if(action){
-                res.status(200).json(action)
-            } else {
-                res.status(400).json({message: 'this is not the id your looking for'})
-            }
-        })
+router.get('/:id', validateActionId, (req, res)=>{
+   res.status(201).json(req.action)
 })
 
-router.post('/', (req,res,next)=>{
-    Actions.insert()
-        .then(newAction=>{
-            console.log(newAction)
-        })
+router.post('/', validateActionBody, (req,res,next)=>{
+    const newAction = req.body
+        Actions.insert(newAction)
+            .then(action=>{
+                res.status(201).json(action)
+            })
+            .catch(next)
 })
+router.put('/:id',validateActionBody, validateActionId, (req, res, next)=>{
+    const changes = req.body;
+    const { id } = req.params
+            Actions.update(id, changes)
+                .then(action=>{
+                        res.status(200).json(action)
+                })
+                .catch(next)
+})
+router.delete('/:id', validateActionId, (req, res, next)=>{
+    const {id} = req.params
+    Actions.remove(id)
+        .then(()=>{
+            res.status(200).json({message: 'This action is no longer needed!'})
+        })
+        .catch(next)
+})
+
+
+
+
 module.exports = router
